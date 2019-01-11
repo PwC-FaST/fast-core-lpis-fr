@@ -1,0 +1,47 @@
+apiVersion: nuclio.io/v1beta1
+kind: Function
+metadata:
+  name: lpis-fr-pipe-http-trigger
+  namespace: fast-platform
+  labels:
+    platform: fast
+    module: core
+    data: lpis
+    ms: fr
+spec:
+  alias: latest
+  description: Forge a download command from an http POST request
+  handler: main:handler
+  image: eufast/lpis-fr-pipe-http-trigger:0.1.0
+  replicas: 1
+  maxReplicas: 3
+  targetCPU: 80
+  runtime: python:3.6
+  env:
+  - name: KAFKA_BOOTSTRAP_SERVER
+    value: "kafka-broker.kafka:9092"
+  - name: TARGET_TOPIC
+    value: lpis-fr-pipe-download
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      cpu: 1
+      memory: 1Gi 
+  triggers:
+    http:
+      attributes:
+        ingresses:
+          "dev":
+            host: api.fast.sobloo.io
+            paths:
+            - /v1/fast/data/lpis/fr
+      annotations:
+        ingress.kubernetes.io/auth-secret: fast-ingress-auth
+        ingress.kubernetes.io/auth-type: basic
+      kind: http
+      maxWorkers: 5
+  version: -1
+status:
+  state: waitingForResourceConfiguration
